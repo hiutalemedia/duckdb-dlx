@@ -1,29 +1,31 @@
 cmake_minimum_required(VERSION 3.5)
 
 set(TARGET_NAME dlx)
+
 set(EXTENSION_NAME ${TARGET_NAME}_extension)
+set(LOADABLE_EXTENSION_NAME ${TARGET_NAME}_loadable_extension)
 
 project(${TARGET_NAME})
 
-# CMAKE_CURRENT_SOURCE_DIR always points to this file's directory,
-# regardless of where DuckDB's build machinery invokes cmake from.
-set(EXT_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
+set(CMAKE_CXX_STANDARD "17" CACHE STRING "C++ standard to enforce")
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+include_directories(src/include)
+
+# ←←← ADD ALL YOUR SOURCE FILES HERE
 set(EXTENSION_SOURCES
-    ${EXT_ROOT}/src/dlx_extension.cpp
-    ${EXT_ROOT}/src/dlx_function.cpp
+    src/dlx_extension.cpp
+    src/dlx_function.cpp
 )
 
 build_static_extension(${TARGET_NAME} ${EXTENSION_SOURCES})
-target_include_directories(${EXTENSION_NAME} PRIVATE
-    ${EXT_ROOT}/src
-    ${EXT_ROOT}/src/include
-)
-set_property(TARGET ${EXTENSION_NAME} PROPERTY CXX_STANDARD 17)
-
 build_loadable_extension(${TARGET_NAME} " " ${EXTENSION_SOURCES})
-target_include_directories(${TARGET_NAME}_loadable_extension PRIVATE
-    ${EXT_ROOT}/src
-    ${EXT_ROOT}/src/include
-)
-set_property(TARGET ${TARGET_NAME}_loadable_extension PROPERTY CXX_STANDARD 17)
+
+target_compile_options(${EXTENSION_NAME} PRIVATE -O2 -Wall -Wextra -Wno-unused-parameter)
+target_compile_options(${LOADABLE_EXTENSION_NAME} PRIVATE -O2 -Wall -Wextra -Wno-unused-parameter)
+
+install(
+  TARGETS ${EXTENSION_NAME}
+  EXPORT "${DUCKDB_EXPORT_SET}"
+  LIBRARY DESTINATION "${INSTALL_LIB_DIR}"
+  ARCHIVE DESTINATION "${INSTALL_LIB_DIR}")
